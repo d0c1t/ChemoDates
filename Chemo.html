@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chemo Dates Calculator</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    .saturday {
+      color: blue;
+      font-weight: bold;
+    }
+    .sunday {
+      color: red;
+      font-weight: bold;
+    }
+    .dates-list {
+      text-align: left;
+      font-size: 1.1rem;
+    }
+    .credit {
+      margin-top: auto;
+      font-size: 0.85rem;
+      text-align: center;
+      color: #666;
+    }
+    .credit a {
+      color: #666;
+      text-decoration: none;
+    }
+    .credit a:hover {
+      text-decoration: underline;
+    }
+    .toast-container {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 9999;
+    }
+    /* Make sure both cards match height */
+    .card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .card-body {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .flex-spacer {
+      flex-grow: 1;
+    }
+    .loading {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="mb-5 text-center">Chemo Dates Calculator</h1>
+    <div class="row">
+      <!-- Left Column: Form -->
+      <div class="col-lg-6 mb-4 d-flex flex-column">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Input Schedule</h5>
+            <form id="chemoForm">
+              <div class="mb-3">
+                <label for="startDate" class="form-label">Start Date:</label>
+                <input type="date" id="startDate" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label for="intervalDays" class="form-label">Interval (days between cycles):</label>
+                <input type="number" id="intervalDays" class="form-control" value="21" min="1" required />
+              </div>
+              <div class="mb-3">
+                <label for="numCycles" class="form-label">Number of cycles:</label>
+                <input type="number" id="numCycles" class="form-control" value="6" min="1" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Generate Dates</button>
+            </form>
+            <div id="loading" class="loading mt-3 text-center">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Cycle Dates -->
+      <div class="col-lg-6 d-flex flex-column">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-3">Cycle Dates</h5>
+            <ul id="datesList" class="list-group mb-3 dates-list flex-grow-0"></ul>
+            <button id="copyBtn" class="btn btn-outline-secondary mb-3">Copy Dates</button>
+            <div class="flex-spacer"></div>
+            <div class="credit">
+              Created by <a href="https://x.com/salmanarif77" target="_blank">@Dr. Salman Arif</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast for Copy Feedback -->
+  <div class="toast-container">
+    <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          Dates copied to clipboard!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+  <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        Please enter valid inputs.
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const form = document.getElementById('chemoForm');
+    const datesList = document.getElementById('datesList');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyToastEl = document.getElementById('copyToast');
+    const errorToastEl = document.getElementById('errorToast');
+    const copyToast = new bootstrap.Toast(copyToastEl);
+    const errorToast = new bootstrap.Toast(errorToastEl);
+    const loading = document.getElementById('loading');
+
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    function generateDates(startDate, intervalDays, numCycles) {
+      datesList.innerHTML = '';
+      loading.style.display = 'block';
+
+      for (let i = 0; i < numCycles; i++) {
+        const cycleDate = new Date(startDate);
+        cycleDate.setDate(startDate.getDate() + i * intervalDays);
+
+        const li = document.createElement('li');
+        li.classList.add('list-group-item');
+
+        const dayOfWeek = cycleDate.getDay();
+        const dayName = dayNames[dayOfWeek];
+
+        const day = String(cycleDate.getDate()).padStart(2, '0');
+        const month = String(cycleDate.getMonth() + 1).padStart(2, '0');
+        const year = cycleDate.getFullYear();
+
+        li.textContent = `${dayName} ${day}/${month}/${year}`;
+
+        if (dayOfWeek === 6) {
+          li.classList.add('saturday');
+        } else if (dayOfWeek === 0) {
+          li.classList.add('sunday');
+        }
+
+        datesList.appendChild(li);
+      }
+
+      loading.style.display = 'none';
+    }
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const startDateInput = document.getElementById('startDate').value;
+      const intervalDaysInput = document.getElementById('intervalDays').value;
+      const numCyclesInput = document.getElementById('numCycles').value;
+
+      if (!startDateInput || isNaN(intervalDaysInput) || isNaN(numCyclesInput)) {
+        errorToast.show();
+        return;
+      }
+
+      const startDate = new Date(startDateInput);
+      const intervalDays = parseInt(intervalDaysInput);
+      const numCycles = parseInt(numCyclesInput);
+
+      if (intervalDays <= 0 || numCycles <= 0) {
+        errorToast.show();
+        return;
+      }
+
+      generateDates(startDate, intervalDays, numCycles);
+    });
+
+    copyBtn.addEventListener('click', function() {
+      const items = datesList.querySelectorAll('li');
+      let textToCopy = '';
+      items.forEach(li => {
+        textToCopy += li.textContent + '\n';
+      });
+
+      navigator.clipboard.writeText(textToCopy.trim()).then(() => {
+        copyToast.show();
+      }).catch(err => {
+        console.error('Could not copy text: ', err);
+      });
+    });
+  </script>
+</body>
+</html>
