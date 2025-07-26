@@ -17,7 +17,7 @@ This is a simple, web-based tool to calculate chemotherapy cycle dates. It allow
 To run the app locally:
 
 1. Clone the repository or download the HTML file.
-2. Open `Chemo.html` in any modern browser.
+2. Open `Index.html` in any modern browser.
 
 ## 🛠️ Built With
 - HTML5
